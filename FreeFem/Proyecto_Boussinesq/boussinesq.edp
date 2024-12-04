@@ -1,0 +1,99 @@
+//parametros
+
+real alpha = 1;
+real beta = 0.1;
+real gamma = 1;
+real tol = 1e-8;
+
+//parametrizacion del borde
+
+border a(t=0, 1){x=t; y=0; label=1;};
+border b(t=0, 0.5){x=1; y=t; label=2;};
+border c(t=0, 0.1){x=1; y=0.5+t; label=3;};
+border d(t=0, 0.2){x=1; y=0.6+t; label=4;};
+border e(t=0, 0.1){x=1; y=0.8+t; label=3;};
+border f(t=0, 0.1){x=1; y=0.9+t; label=2;};
+border g(t=0, 1){x=1-t; y=1; label=2;};
+border h(t=0, 1){x=0; y=1-t; label=2;};
+
+//generacion de la malla
+int N=10;
+mesh Th = buildmesh(a(N) + b(0.5*N) + c(0.1*N) + d(0.2*N) + e(0.1*N) +f(0.1*N)+g(N)+h(N));
+
+
+//Espacio de funciones
+fespace Vh(Th,P2);
+Vh u1o, u2o, v1, v2, u1, u2, du1, du2; 
+
+fespace Wh(Th,P1);
+Wh C, phi;
+
+fespace Qh(Th, P1);
+Qh p, q, dp;
+
+//Operadores
+macro a(u1,u2,v1,v2) (dx(u1)*dx(v1) + dy(u1)*dy(v1) + dx(u2)*dx(v2) + dy(u2)*dy(v2)) //
+macro gradient(u) [dx(u),dy(u)] //
+macro div(u1,u2) (dx(u1) + dy(u2)) //
+macro convec(u1,u2,v1,v2) [ [u1,u2]'*[dx(v1),dy(v1)] , [u1,u2]'*[dx(v2),dy(v2)] ]//
+
+//iteracion para Navier-Stokes
+macro NS() {
+ int k;
+ real err=0;
+ Stokes;
+/* Newton Loop  */
+ for(k=0; k< 15; k++) {
+   LinNS;
+   du1[] = u1[] - u1o[];
+   du2[] = u2[] - u2o[];
+   err = sqrt(int2d(Th)(gradient(du1)'*gradient(du1)+gradient(du2)'*gradient(du2))) /
+     sqrt(int2d(Th)(gradient(u1)'*gradient(u1) + gradient(u2)'*gradient(u2)));
+   u1o[] = u1[];
+   u2o[] = u2[];
+   cout << "error = " << err << " / " << "tol = " << tol << endl;
+   cout.flush;
+   if(err < tol) break;
+ }
+ /* Newton loop has not converged */
+ if(err > tol) {
+   cout << "NS Warning : non convergence : err = " << err << " / tolerancia = " << tol << endl;
+ }
+
+} //
+
+//Definicion de problemas
+problem Stokes ([u1o, u2o, p],[v1, v2, q])
+    = int2d(Th)(
+        beta*a(u1o,u2o,v1,v2)
+        - div(v1,v2)*p
+        + q*(div(u1o,u2o))- 1e-10*p*q) 
+     +on(3, u1o=-1, u2o=0)
+     +on(4, u1o=-1, u2o=0)
+     +on(1,2,u1o=0, u2o=0);
+
+problem LinNS([u1,u2,dp],[v1,v2,q]) = 
+     int2d(Th)(beta*a(u1,u2,v1,v2)
+	       + convec(u1,u2, u1o, u2o)'*[v1,v2]
+	       + convec(u1o,u2o,u1,u2)'*[v1,v2]
+	       + div(u1,u2)*q - div(v1,v2)*dp- 1e-10*dp*q)
+        -int2d(Th)(convec(u1o,u2o, u1o, u2o)'*[v1,v2])
+     +on(3, u1=-1, u2=0)
+     +on(4, u1=-1, u2=0)
+     +on(1,2,u1=0, u2=0);
+
+problem reacdif(C,phi) = 
+    int2d(Th)([u1,u2]'*gradient(C)*phi+alpha*gradient(C)'*gradient(phi))
+        -int1d(Th,c,d)(gamma*C*phi)
+        +on(4, C=0)
+        +on(1, C=1);
+
+NS;
+
+reacdif;
+
+
+//graficos
+plot(Th, wait=true);
+plot([u1,u2],value=1,wait=1);
+plot(C,value=1,wait=1);
