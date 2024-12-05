@@ -1,7 +1,7 @@
 //parametros
 
 real alpha = 1;
-real beta = 0.1;
+real beta = 1;
 real gamma = 1;
 real tol = 1e-8;
 
@@ -17,19 +17,16 @@ border g(t=0, 1){x=1-t; y=1; label=2;};
 border h(t=0, 1){x=0; y=1-t; label=2;};
 
 //generacion de la malla
-int N=10;
+int N=20;
 mesh Th = buildmesh(a(N) + b(0.5*N) + c(0.1*N) + d(0.2*N) + e(0.1*N) +f(0.1*N)+g(N)+h(N));
 
 
 //Espacio de funciones
 fespace Vh(Th,P2);
-Vh u1o, u2o, v1, v2, u1, u2, du1, du2; 
-
-fespace Wh(Th,P1);
-Wh C, phi;
+Vh u1o, u2o, v1, v2, u1, u2, du1, du2;
 
 fespace Qh(Th, P1);
-Qh p, q, dp;
+Qh p, q, dp, C, phi;
 
 //Operadores
 macro a(u1,u2,v1,v2) (dx(u1)*dx(v1) + dy(u1)*dy(v1) + dx(u2)*dx(v2) + dy(u2)*dy(v2)) //
@@ -68,7 +65,7 @@ problem Stokes ([u1o, u2o, p],[v1, v2, q])
         beta*a(u1o,u2o,v1,v2)
         - div(v1,v2)*p
         + q*(div(u1o,u2o))- 1e-10*p*q) 
-     +on(3, u1o=-1, u2o=0)
+     +on(3, u1o=2, u2o=0)
      +on(4, u1o=-1, u2o=0)
      +on(1,2,u1o=0, u2o=0);
 
@@ -78,7 +75,7 @@ problem LinNS([u1,u2,dp],[v1,v2,q]) =
 	       + convec(u1o,u2o,u1,u2)'*[v1,v2]
 	       + div(u1,u2)*q - div(v1,v2)*dp- 1e-10*dp*q)
         -int2d(Th)(convec(u1o,u2o, u1o, u2o)'*[v1,v2])
-     +on(3, u1=-1, u2=0)
+     +on(3, u1=2, u2=0)
      +on(4, u1=-1, u2=0)
      +on(1,2,u1=0, u2=0);
 
@@ -92,8 +89,19 @@ NS;
 
 reacdif;
 
+include "ffmatlib.idp"
+
+//Save mesh
+savemesh(Th,"mesh.msh");
+//Save finite element space connectivity
+ffSaveVh(Th,Vh,"Vh.txt");
+ffSaveVh(Th,Qh,"Qh.txt");
+//Save some scalar data
+ffSaveData(C,"C.txt");
+//Save a 2D vector field
+ffSaveData2(u1,u2,"velocidad.txt");
 
 //graficos
-plot(Th, wait=true);
+//plot(Th, wait=true);
 plot([u1,u2],value=1,wait=1);
-plot(C,value=1,wait=1);
+//plot(C,value=1,wait=1);
