@@ -1,8 +1,9 @@
 //parametros
 
-real alpha = 1;
-real beta = 1;
+real delta = 1;
+real nu = 0.1;
 real gamma = 1;
+real lambda = 1;
 real tol = 1e-8;
 
 //parametrizacion del borde
@@ -62,26 +63,26 @@ macro NS() {
 //Definicion de problemas
 problem Stokes ([u1o, u2o, p],[v1, v2, q])
     = int2d(Th)(
-        beta*a(u1o,u2o,v1,v2)
+        nu*a(u1o,u2o,v1,v2)
         - div(v1,v2)*p
         + q*(div(u1o,u2o))- 1e-10*p*q) 
-     +on(3, u1o=2, u2o=0)
+     +on(3, u1o=1, u2o=0)
      +on(4, u1o=-1, u2o=0)
      +on(1,2,u1o=0, u2o=0);
 
 problem LinNS([u1,u2,dp],[v1,v2,q]) = 
-     int2d(Th)(beta*a(u1,u2,v1,v2)
+     int2d(Th)(nu*a(u1,u2,v1,v2)
 	       + convec(u1,u2, u1o, u2o)'*[v1,v2]
 	       + convec(u1o,u2o,u1,u2)'*[v1,v2]
 	       + div(u1,u2)*q - div(v1,v2)*dp- 1e-10*dp*q)
         -int2d(Th)(convec(u1o,u2o, u1o, u2o)'*[v1,v2])
-     +on(3, u1=2, u2=0)
+     +on(3, u1=1, u2=0)
      +on(4, u1=-1, u2=0)
      +on(1,2,u1=0, u2=0);
 
 problem reacdif(C,phi) = 
-    int2d(Th)([u1,u2]'*gradient(C)*phi+alpha*gradient(C)'*gradient(phi))
-        -int1d(Th,c,d)(gamma*C*phi)
+    int2d(Th)([u1,u2]'*gradient(C)*phi+delta*gradient(C)'*gradient(phi))
+        -int1d(Th,c,d)(gamma*C*phi)+int2d(Th)(lambda*C*phi)
         +on(4, C=0)
         +on(1, C=1);
 
@@ -89,19 +90,19 @@ NS;
 
 reacdif;
 
-include "ffmatlib.idp"
+//include "ffmatlib.idp"
 
 //Save mesh
-savemesh(Th,"mesh.msh");
+//savemesh(Th,"mesh.msh");
 //Save finite element space connectivity
-ffSaveVh(Th,Vh,"Vh.txt");
-ffSaveVh(Th,Qh,"Qh.txt");
+//ffSaveVh(Th,Vh,"Vh.txt");
+//ffSaveVh(Th,Qh,"Qh.txt");
 //Save some scalar data
-ffSaveData(C,"C.txt");
+//ffSaveData(C,"C.txt");
 //Save a 2D vector field
-ffSaveData2(u1,u2,"velocidad.txt");
+//ffSaveData2(u1,u2,"velocidad.txt");
 
 //graficos
 //plot(Th, wait=true);
 plot([u1,u2],value=1,wait=1);
-//plot(C,value=1,wait=1);
+plot(C,value=1,wait=1);
