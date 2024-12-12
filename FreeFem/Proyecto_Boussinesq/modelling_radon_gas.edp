@@ -1,7 +1,8 @@
+//load "medit"
 //parametros
 
 real delta = 1;
-real nu = 0.1;
+real nu = 1;
 real gamma = 1;
 real lambda = 1;
 real tol = 1e-8;
@@ -82,7 +83,7 @@ problem LinNS([u1,u2,dp],[v1,v2,q]) =
 
 problem reacdif(C,phi) = 
     int2d(Th)([u1,u2]'*gradient(C)*phi+delta*gradient(C)'*gradient(phi))
-        -int1d(Th,c,d)(gamma*C*phi)+int2d(Th)(lambda*C*phi)
+        -int1d(Th,c,d)(C*(u1*Ns.x+u2*Ns.y)*phi)+int2d(Th)(lambda*C*phi)
         +on(4, C=0)
         +on(1, C=1);
 
@@ -90,7 +91,22 @@ NS;
 
 reacdif;
 
+
+real[int] colorhsv=[ // color hsv model
+   4./6., 1 , 0.5, // dark blue
+   4./6., 1 , 1, // blue
+   5./6., 1 , 1, // magenta
+   1, 1. , 1, // red
+   1, 0.5 , 1 // light red
+   ];
+
+real[int] viso(31);
+
+for (int i = 0; i < viso.n; i++)
+ viso[i] = i*0.1;
 //include "ffmatlib.idp"
+
+
 
 //Save mesh
 //savemesh(Th,"mesh.msh");
@@ -105,4 +121,4 @@ reacdif;
 //graficos
 //plot(Th, wait=true);
 plot([u1,u2],value=1,wait=1);
-plot(C,value=1,wait=1);
+plot(C,viso=viso(0:viso.n-1), value=true, fill=true, wait=true, hsv=colorhsv);
