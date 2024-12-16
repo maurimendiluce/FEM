@@ -1,4 +1,5 @@
-//load "medit"
+load "medit"
+load "iovtk"
 //parametros
 
 real delta = 1;
@@ -21,7 +22,7 @@ border h(t=0, 1){x=0; y=1-t; label=2;};
 //generacion de la malla
 int N=20;
 mesh Th = buildmesh(a(N) + b(0.5*N) + c(0.1*N) + d(0.2*N) + e(0.1*N) +f(0.1*N)+g(N)+h(N));
-
+medit("mesh",Th);
 
 //Espacio de funciones
 fespace Vh(Th,P2);
@@ -92,6 +93,8 @@ NS;
 reacdif;
 
 
+
+//GRAFICOS
 real[int] colorhsv=[ // color hsv model
    4./6., 1 , 0.5, // dark blue
    4./6., 1 , 1, // blue
@@ -104,10 +107,11 @@ real[int] viso(31);
 
 for (int i = 0; i < viso.n; i++)
  viso[i] = i*0.1;
+
+
+
+//info para graficar en matlab (ver graficos.m)
 //include "ffmatlib.idp"
-
-
-
 //Save mesh
 //savemesh(Th,"mesh.msh");
 //Save finite element space connectivity
@@ -119,6 +123,13 @@ for (int i = 0; i < viso.n; i++)
 //ffSaveData2(u1,u2,"velocidad.txt");
 
 //graficos
+
 //plot(Th, wait=true);
-plot([u1,u2],value=1,wait=1);
-plot(C,viso=viso(0:viso.n-1), value=true, fill=true, wait=true, hsv=colorhsv);
+//plot([u1,u2],value=1,wait=1,nbiso=5);
+//plot(C,viso=viso(0:viso.n-1), value=true, fill=true, wait=true, hsv=colorhsv);
+
+
+//medit("C", Th, C);
+
+//int[int] orderOut = [1,1,1];
+//savevtk("graficos.vtu", Th, u1,u2,[u1,u2,0], dataname="graficos",order=orderOut);
