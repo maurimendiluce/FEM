@@ -1,0 +1,9 @@
+mesh Th = square(2, 2); // The initial mesh
+plot(Th, wait=true);
+
+Th = adaptmesh(Th, 1./4., IsMetric=1, nbvx=10000);
+plot(Th, wait=true);
+
+Th = adaptmesh(Th, 1./8., IsMetric=1, nbvx=10000); // More than one time due to the
+Th = adaptmesh(Th, 1./16., IsMetric=1, nbvx=10000); // adaptation bound `maxsubdiv=`
+plot(Th, wait=true);
